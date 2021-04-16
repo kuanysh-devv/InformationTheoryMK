@@ -2,8 +2,18 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
-public class Assignment2 {
+public class Assignment2{
+    private double prob;
+    private char symbol;
+
+    public Assignment2(double prob, char symbol) {
+        this.prob = prob;
+        this.symbol = symbol;
+    }
 
     static String readFile(String path, Charset encoding)
             throws IOException
@@ -12,9 +22,10 @@ public class Assignment2 {
         return new String(encoded, encoding);
     }
 
+
     static void getProbability(String strr)
     {
-
+        ArrayList<Assignment2> listofprobs = new ArrayList<>();
         double count[] = new double[128]; //ASCII size
 
         for (int i = 0; i < strr.length(); i++) //to counting how much each letter in string by ASCII code
@@ -34,22 +45,20 @@ public class Assignment2 {
 
             if (howmuch == 1) {
                 double probability = count[strr.charAt(i)]/strr.length();
-
-                if(strr.charAt(i)==' '){
-                    System.out.print("space" + " - ");
-                    System.out.format("%.3f", probability);
-                    System.out.println();
-                }
-                else if(strr.charAt(i)=='\n'){
-                    System.out.print("newline" + " - ");
-                    System.out.format("%.3f", probability);
-                    System.out.println();
-                }
-                else {
-                    System.out.print(strr.charAt(i) + " - ");
-                    System.out.format("%.3f", probability);
-                    System.out.println();
-                }
+                Assignment2 assignment2 = new Assignment2(probability,strr.charAt(i));
+                listofprobs.add(assignment2);
+            }
+        }
+        Collections.sort(listofprobs, Comparator.comparingDouble(Assignment2::getProb).reversed());
+        for(int m = 0; m<listofprobs.size();m++){
+            if(listofprobs.get(m).getSymbol()==' '){
+                System.out.print("space"+" - ");
+                System.out.format("%.3f", listofprobs.get(m).getProb());
+                System.out.println();}
+            else{
+                System.out.print(listofprobs.get(m).getSymbol()+" - ");
+                System.out.format("%.3f", listofprobs.get(m).getProb());
+                System.out.println();
             }
         }
     }
@@ -66,5 +75,21 @@ public class Assignment2 {
 
 
     }
-}
 
+    public double getProb() {
+        return prob;
+    }
+
+    public void setProb(double prob) {
+        this.prob = prob;
+    }
+
+    public char getSymbol() {
+        return symbol;
+    }
+
+    public void setSymbol(char symbol) {
+        this.symbol = symbol;
+    }
+
+}
