@@ -8,17 +8,20 @@ import java.util.*;
 public class Assignment2 {
     public static ArrayList<Character> charArray = new ArrayList<>();
     public static ArrayList<Double> charfreq = new ArrayList<>();
+    public static StringBuilder decodedText = new StringBuilder();
     private static double codelength = (double) 0;
     private double prob;
     private char symbol;
+    private int frequency;
 
     Assignment2 left;
     Assignment2 right;
     private String nameofnode;
 
-    public Assignment2(double prob, char symbol) {
+    public Assignment2(double prob, char symbol, int frequency) {
         this.prob = prob;
         this.symbol = symbol;
+        this.frequency = frequency;
     }
 
     public Assignment2() {
@@ -33,7 +36,15 @@ public class Assignment2 {
         this.nameofnode = nameofnode;
     }
 
-    static class MyComparator implements Comparator<Assignment2> {
+    public int getFrequency() {
+        return frequency;
+    }
+
+    public void setFrequency(int frequency) {
+        this.frequency = frequency;
+    }
+
+    static class Comp implements Comparator<Assignment2> {
         @Override
         public int compare(Assignment2 o1, Assignment2 o2) {
             if(o2.getProb()-o1.getProb()>0){
@@ -72,11 +83,12 @@ public class Assignment2 {
 
             if (howmuch == 1) {
                 double probability = count[strr.charAt(i)] / strr.length();
-                Assignment2 assignment2 = new Assignment2(probability, strr.charAt(i));
+
+                Assignment2 assignment2 = new Assignment2(probability, strr.charAt(i), (int) count[strr.charAt(i)]);
                 listofprobs.add(assignment2);
             }
         }
-        Collections.sort(listofprobs, Comparator.comparingDouble(Assignment2::getProb));
+        Collections.sort(listofprobs, Comparator.comparingDouble(Assignment2::getProb).reversed());
         for (int m = 0; m < listofprobs.size(); m++) {
             if (listofprobs.get(m).getSymbol() == ' ') {
                 System.out.print("space" + " - ");
@@ -84,7 +96,22 @@ public class Assignment2 {
                 charArray.add(listofprobs.get(m).getSymbol());
                 charfreq.add(listofprobs.get(m).getProb());
                 System.out.println();
-            } else {
+            }
+            else if (listofprobs.get(m).getSymbol() == '\n') {
+                System.out.print("new line" + " - ");
+                System.out.format("%.3f", listofprobs.get(m).getProb());
+                charArray.add(listofprobs.get(m).getSymbol());
+                charfreq.add(listofprobs.get(m).getProb());
+                System.out.println();
+            }
+            else if (listofprobs.get(m).getSymbol() == '\r') {
+                System.out.print("/r" + " - ");
+                System.out.format("%.3f", listofprobs.get(m).getProb());
+                charArray.add(listofprobs.get(m).getSymbol());
+                charfreq.add(listofprobs.get(m).getProb());
+                System.out.println();
+            }
+            else {
                 System.out.print(listofprobs.get(m).getSymbol() + " - ");
                 System.out.format("%.3f", listofprobs.get(m).getProb());
                 charArray.add(listofprobs.get(m).getSymbol());
@@ -101,61 +128,59 @@ public class Assignment2 {
         BufferedReader text = new BufferedReader(new FileReader(file));
 
         String content = Files.readString(Path.of("C:\\Users\\kuany\\Desktop\\test.txt"), StandardCharsets.US_ASCII);
-        content = content.replace("\n", "").replace("\r", "");
         getProbability(content);
 
         Scanner s = new Scanner(System.in);
 
-        int n = charArray.size();
+        int size = charArray.size();
 
-        PriorityQueue<Assignment2> qu
-                = new PriorityQueue<Assignment2>(n, new MyComparator());
+        PriorityQueue<Assignment2> HuffmanTree = new PriorityQueue<Assignment2>(size, new Comp());
 
-        for (int i = 0; i < n; i++) {
+        for (int i = 0; i < size; i++) {
 
-            Assignment2 hnn = new Assignment2();
+            Assignment2 temp = new Assignment2();
 
-            hnn.symbol = charArray.get(i);
-            hnn.prob = charfreq.get(i);
+            temp.symbol = charArray.get(i);
+            temp.prob = charfreq.get(i);
 
-            hnn.left = null;
-            hnn.right = null;
+            temp.left = null;
+            temp.right = null;
 
-            qu.add(hnn);
+            HuffmanTree.add(temp);
         }
 
         Assignment2 root = null;
 
-        while (qu.size() > 1) {
+        while (HuffmanTree.size() > 1) {
 
-            Assignment2 x = qu.peek();
-            qu.poll();
+            Assignment2 first = HuffmanTree.peek();
+            HuffmanTree.poll();
 
-            Assignment2 y = qu.peek();
-            qu.poll();
+            Assignment2 second = HuffmanTree.peek();
+            HuffmanTree.poll();
 
             Assignment2 temp = new Assignment2();
 
-            temp.prob = x.prob + y.prob;
+            temp.prob = first.prob + second.prob;
             temp.symbol = '-';
 
 
-            temp.left = x;
+            temp.left = first;
 
-            temp.right = y;
+            temp.right = second;
 
             root = temp;
 
-            qu.add(temp);
+            HuffmanTree.add(temp);
 
         }
         System.out.println();
-        printCode(root,"");
+        HuffmanCode(root, "");
 
         Map<Character, String> huffmanCode = new HashMap<>();
-        encode(root,"",huffmanCode);
+        encode(root, "", huffmanCode);
         StringBuilder sb = new StringBuilder();
-        for (char c: content.toCharArray()) {
+        for (char c : content.toCharArray()) {
             sb.append(huffmanCode.get(c));
         }
         System.out.println();
@@ -173,24 +198,68 @@ public class Assignment2 {
 
         System.out.println();
 
-        double compratio = (double) (content.length()* 8) / sb.toString().length();
+        double compratio = (double) (content.length() * 8) / sb.toString().length();
 
-        System.out.println("Number of bits in the original text: "+ content.length()* 8 + " bits");
+        System.out.println("Number of bits in the original text: " + content.length() * 8 + " bits");
 
-        System.out.println("Number of bits in the compressed text: "+sb.toString().length()+ " bits");
+        System.out.println("Number of bits in the compressed text: " + sb.toString().length() + " bits");
 
         System.out.print("Compression ratio = ");
         System.out.format("%.2f", compratio);
         System.out.println();
 
         System.out.print("Average code length = ");
-        printCodeLength(root,"");
+        printCodeLength(root, "");
         System.out.format("%.2f", codelength);
         System.out.println(" bits/symbol");
         System.out.println();
+        String decoding = Files.readString(Path.of("C:\\Users\\kuany\\Desktop\\encoded.txt"), StandardCharsets.US_ASCII);
+        System.out.println("Decoded text:");
+        System.out.println();
+        if (root.left == null && root.right == null) {
+            while (root.getFrequency() == 0) {
+                System.out.print(root.symbol);
+            }
+        } else {
+            int index = -1;
+            while (index < sb.length() - 1) {
+                index = decode(root, index, sb);
+            }
+        }
+        System.out.println();
+        System.out.println();
+        System.out.println("Original text:");
+        System.out.println();
+        System.out.println(content);
+        System.out.println();
+        if (content.equals(decodedText.toString())) {
+            System.out.println("The original text and decoded text match.");
+        } else {
+            System.out.println("The original text and decoded doesn't match.");
+        }
 
 
     }
+    public static int decode(Assignment2 root, int index, StringBuilder sb)
+    {
+        if (root == null) {
+            return index;
+        }
+
+        if (root.left == null && root.right == null)
+        {
+            decodedText.append(root.symbol);
+            System.out.print(root.symbol);
+            return index;
+        }
+
+        index++;
+
+        root = (sb.charAt(index) == '0') ? root.left : root.right;
+        index = decode(root, index, sb);
+        return index;
+    }
+
     public static void encode(Assignment2 root, String str,
                               Map<Character, String> huffmanCode) {
         if (root == null) {
@@ -219,7 +288,7 @@ public class Assignment2 {
         printCodeLength(root.right, s + "1");
     }
 
-    public static void printCode(Assignment2 root, String s)
+    public static void HuffmanCode(Assignment2 root, String code)
     {
 
         if (root.left == null && root.right == null && Character.isDefined(root.symbol))
@@ -227,21 +296,35 @@ public class Assignment2 {
             if(root.symbol == ' '){
                 System.out.print("SPACE"+" - ");
                 System.out.format("%.3f", root.getProb());
-                System.out.println(" - "+ s);
+                System.out.println(" - "+ code);
+
+                return;
+            }
+            else if(root.symbol == '\n'){
+                System.out.print("New line"+" - ");
+                System.out.format("%.3f", root.getProb());
+                System.out.println(" - "+ code);
+
+                return;
+            }
+            else if(root.symbol == '\r'){
+                System.out.print("/r"+" - ");
+                System.out.format("%.3f", root.getProb());
+                System.out.println(" - "+ code);
 
                 return;
             }
             else{
                 System.out.print(root.symbol+" - ");
                 System.out.format("%.3f", root.getProb());
-                System.out.println(" - "+ s);
+                System.out.println(" - "+ code);
 
                 return;}
         }
 
 
-        printCode(root.left, s + "0");
-        printCode(root.right, s + "1");
+        HuffmanCode(root.left, code + "0");
+        HuffmanCode(root.right, code + "1");
     }
 
 
